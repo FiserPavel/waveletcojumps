@@ -8,7 +8,7 @@ The code can also be used to estimate the Jump-Wavelet Two Scale Realized Varian
 
 Baruník, J., and Vácha, L., (2018) [Do co-jumps impact correlations in currency markets?](https://ideas.repec.org/p/arx/papers/1602.05489.html) **Journal of Financial Markets**, 37, pp.97-119<br/>
 
-Baruník, J., and Vácha, L., (2015) [Realized wavelet-based estimation of integrated variance and jumps in the presence of noise](https://ideas.repec.org/p/arx/papers/1602.05489.html) **Quantitative Finance**, 15 (6), pp. 959-973<br/>
+Baruník, J., and Vácha, L., (2015) [Realized wavelet-based estimation of integrated variance and jumps in the presence of noise](https://ideas.repec.org/p/arx/papers/1202.1854.html) **Quantitative Finance**, 15 (6), pp. 959-973<br/>
 
 # Example
 
