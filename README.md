@@ -2,7 +2,7 @@
 
 The code has been developed in R version 3.5.0. and accompanies the paper
 
-Barunik, J. and Fiser, P. (2019): *Co-jumping of Treasury Yield Curve Rates*, manuscript [available here for download](soon) (May 2019)
+Barunik, J. and Fiser, P. (2019): *Co-jumping of Treasury Yield Curve Rates*, manuscript [available here for download](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3382841) (May 2019)
 
 The code can also be used to estimate the Jump-Wavelet Two Scale Realized Variance (JWTSRV) and Jump-Wavelet Two Scale Realized Covariance (JWTSCV) estimators introduced in 
 
