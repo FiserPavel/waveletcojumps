@@ -18,7 +18,9 @@ ICestimation <- function(return1,
                          fixedG = NA_real_){
   # Zhang(2011) G parameter - tuned based on number of intraday observations
   # Calculated as floor of "Number of intraday observations in examined frequency" (1min in our example) 
-  # deviede by ("number of intraday observations in 5 minute frequency"/2.3)
+  # devieded by ("number of intraday observations in 5 minute frequency"/2.3)
+  
+  # For bootstap we use fixed G value - see Zhang(2011) for more details
   Nobservations <- length(return1)
   
   if(is.na(fixedG)) {

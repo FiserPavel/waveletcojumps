@@ -131,23 +131,29 @@ $(document).ready(function () {
 
 <div id="co-jump-estimation---one-day-example" class="section level2">
 <h2>Co-jump estimation - one day example</h2>
-<p>Example of application of Barunik and Vacha (2018) method of jump wavelet estimation used for exact co-jump detection.</p>
-<p>… some other intro…</p>
+<p>Example code which replicates JWTSRV (Barunik and Vacha, 2015 QF) and JWTSCV (Barunik and Vacha, 2018 JFM) methods and is applied in Barunik and Fiser 2019. The main advantage of the wavelet-based estimation is the ability of wavelets to precisely separate the continuous price process into continuous and discontinuous parts even when data are covered with noise. For more details about the method see (Barunik and Vacha, 2018 JFM).</p>
+<p>The code has been developed in R version 3.5.0.</p>
+<div id="required-packages-and-functions" class="section level3">
+<h3>Required packages and functions</h3>
+<p>Load required packages</p>
 <pre class="r"><code>library(wavelets)
-library(dplyr)
-# source('.OneDayExample/OneDayExampleFunctions.R')</code></pre>
+library(dplyr)</code></pre>
+<p>Source functions used in the analyses</p>
+<pre class="r"><code>source('.OneDayExample/OneDayExampleFunctions.R')</code></pre>
 </div>
-<div id="data-used-for-the-analysis" class="section level2">
-<h2>Data used for the analysis</h2>
-<p>One trading day data of two time series - Log returns (dlClose) with one minute and five minutefrequency - are used for the analysis.</p>
+<div id="example-data-used-for-the-analysis" class="section level3">
+<h3>Example data used for the analysis</h3>
+<p>One trading day data of two time series (BN, BX) - Log returns (dlClose) with one minute and five minute frequency - are used for the analysis.</p>
 <pre class="r"><code>BNday_5min &lt;- readRDS(&quot;BNdayExample_5min.rds&quot;)
 BXday_5min &lt;- readRDS(&quot;BXdayExample_5min.rds&quot;)
 
 BNday_1min &lt;- readRDS(&quot;BNdayExample_1min.rds&quot;)
 BXday_1min &lt;- readRDS(&quot;BXdayExample_1min.rds&quot;)</code></pre>
 </div>
-<div id="quadratic-variation-covariation" class="section level2">
-<h2>Quadratic variation / covariation</h2>
+</div>
+<div id="realized-quadratic-variation-covariation" class="section level2">
+<h2>Realized Quadratic variation / covariation</h2>
+<p>Realized quadratic variation and covariation is estimated using five minute frequency data.</p>
 <pre class="r"><code>QV_BNBN &lt;- QVCalculation(BNday_5min$dlClose, BNday_5min$dlClose)
 QV_BXBX &lt;- QVCalculation(BXday_5min$dlClose, BXday_5min$dlClose)
 QV_BNBX &lt;- QVCalculation(BNday_5min$dlClose, BXday_5min$dlClose)
@@ -160,9 +166,9 @@ QVmat.BNBX</code></pre>
 <pre><code>##        QV_BNBX      QV_BNBN      QV_BXBX
 ## 1 3.741457e-05 1.952638e-05 0.0001116799</code></pre>
 </div>
-<div id="integrated-covariance---with-jumps-ic-tscv" class="section level2">
-<h2>Integrated covariance - with jumps (IC TSCV)</h2>
-<p>Observed data with both microstructure noise and jumps are used for estimation of Integraded covariance - two scaled covariance.</p>
+<div id="integrated-covariance-two-scale-realized-covariance---with-jumps-ic-tscv" class="section level2">
+<h2>Integrated covariance two-scale realized covariance - with jumps (IC TSCV)</h2>
+<p>Observed data with both microstructure noise and jumps are used for estimation of Integraded covariance - two scaled realized covariance. Ic TSCV matrix is than used for calcualtion of corresponding correlation.</p>
 <pre class="r"><code># Extract returns from the data 
 retBN &lt;- BNday_1min$dlClose
 retBX &lt;- BXday_1min$dlClose
@@ -180,7 +186,7 @@ ICTSCVmat.BNBX</code></pre>
 </div>
 <div id="jump-identification-and-estimation" class="section level2">
 <h2>Jump identification and estimation</h2>
-<p>Jumps are estimated one minute data.</p>
+<p>The position of jumps is identified and subsequently jumps are estimated using one minute data. Subsequently “jump estimates” are substracted from the “observed returns” and “jump adjusted returns” are obtained.</p>
 <pre class="r"><code>BNday_1min &lt;- cbind(BNday_1min, 
                     JumpIdentification(BNday_1min$dlClose))
 
@@ -198,14 +204,15 @@ BNday_1min %&gt;% filter(Hour == 14 &amp; Min %in% c(30:35))</code></pre>
 </div>
 <div id="co-jump-identification" class="section level2">
 <h2>Co-jump identification</h2>
+<p>Once we have jumps identified and estimated we proceed with co-jump identification.</p>
 <pre class="r"><code>CJ.BNBX &lt;- BNday_1min$JumpSize * BXday_1min$JumpSize 
 CJintraday &lt;- sum(CJ.BNBX)
 CJintraday</code></pre>
 <pre><code>## [1] 5.937817e-06</code></pre>
 </div>
-<div id="integrated-covariance---without-jumps-ic-jwc" class="section level2">
-<h2>Integrated covariance - without jumps (IC JWC)</h2>
-<p>Observed data cleared from the identified jumps are used for estimation of Integraded covariance - Jump wavelet covariance.</p>
+<div id="integrated-covariance-jump-wavelet-covariance---without-jumps-ic-jwc" class="section level2">
+<h2>Integrated covariance jump wavelet covariance - without jumps (IC JWC)</h2>
+<p>Above obtained “jump adjusted returns” are used for estimation of Integraded covariance - Jump wavelet covariance.</p>
 <pre class="r"><code>retBNNoJ &lt;- BNday_1min$dlCloseNoJ
 retBXNoJ &lt;- BXday_1min$dlCloseNoJ
 
@@ -221,15 +228,15 @@ ICJWCmat.BNBX</code></pre>
 </div>
 <div id="bootstrap" class="section level2">
 <h2>Bootstrap</h2>
-<p>Estimated IC JWC is used for bootstap for exact co-jump estimation.</p>
+<p>Estimated IC JWC is used for bootstap to obtain Z values estimates.</p>
 <pre class="r"><code># We are generating 1 second data in the bootstrap - Nobservations.boot 
 Nobservations &lt;- nrow(BNday_1min)
 Nobservations.boot &lt;- Nobservations * 60
 
-# Fixed G is used in this case
-fixedG &lt;- 75 #? total number of observations in our frequency / number of 5 min observations, should be 60 then
+# Fixed G is used in this case, see Zhang(2011) for more details
+fixedG &lt;- 75 
 
-# number of bootsrap loops
+# number of bootstrap loops
 b &lt;- 100
 
 # set seed for replication purposes 
@@ -253,20 +260,23 @@ head(Zvalues)</code></pre>
 ## 6 -0.194569015 -0.1724496390 -0.15285347
 ## 7 -0.050849302 -0.0905321804 -0.02094454</code></pre>
 </div>
-<div id="hypothesis-testing---co-jump-identification" class="section level2">
-<h2>Hypothesis testing - Co-jump identification</h2>
+<div id="hypothesis-testing---co-jump-estimation" class="section level2">
+<h2>Hypothesis testing - Co-jump estimation</h2>
+<p>With Z values estimated we calculate Z statistic and test the null hypothesis of no presence of jumps and co-jumps in the observed returns.</p>
 <pre class="r"><code># values for one-sided and two-sided t-test
 ci &lt;- 2.5767
 ci2 &lt;- 1.968
 
-# Combining data of one pair together
+# Combining co-jumps data of one pair together 
 CJmat.BNBX &lt;- c(CJintraday,0,0)
 
-# Calculation of Z value from calculated data -
+# Calculation of Z value from calculated data
 Zvalue.BNBX &lt;- (QVmat.BNBX - ICJWCmat.BNBX[1:3])/QVmat.BNBX
 
 # Calculation of Z bootstrap statistic
 Zstatistic.BNBX &lt;- (Zvalue.BNBX - colMeans(Zvalues))/sqrt(diag(var(Zvalues)))
+
+# Hausman test for hypothesis testing
 Zstatus &lt;- c(Zstatistic.BNBX[1] &gt; ci2, Zstatistic.BNBX[2:3] &gt; ci) 
 
 # Identification of significant co-jump variation
@@ -283,7 +293,6 @@ results</code></pre>
 <pre class="r"><code># correlation difference
 corrTrue.BNBX &lt;- ICTSCVmat.BNBX$rho.BNBX
 corrContinuous.BNBX &lt;- results[&quot;BNBX&quot;,]$ICJWCfinal/(sqrt(results[&quot;BNBN&quot;,]$ICJWCfinal) * sqrt(results[&quot;BXBX&quot;,]$ICJWCfinal))
-# corrContinuous.BNBX &lt;- results$ICJWCfinal[1]/(sqrt(results$ICJWCfinal[2]) * sqrt(results$ICJWCfinal[3]))
 corrDifference.BNBX &lt;- corrTrue.BNBX - corrContinuous.BNBX
 
 correlation &lt;- data.frame(&quot;True&quot;       = corrTrue.BNBX,

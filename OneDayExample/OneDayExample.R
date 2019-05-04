@@ -2,7 +2,7 @@ rm(list = ls())
 # sourcing functions used in the analysis
 library(wavelets)
 library(dplyr)
-source('~/hw/data_cojumps/OneDayExampleFunctions.R')
+source('./OneDayExample/OneDayExampleFunctions.R')
 
 ################################################################################
 #                             Quadratic variation                              # 
@@ -120,7 +120,6 @@ results
 # correlation difference
 corrTrue.BNBX <- ICTSCVmat.BNBX$rho.BNBX
 corrContinuous.BNBX <- results["BNBX",]$ICJWCfinal/(sqrt(results["BNBN",]$ICJWCfinal) * sqrt(results["BXBX",]$ICJWCfinal))
-# corrContinuous.BNBX <- results$ICJWCfinal[1]/(sqrt(results$ICJWCfinal[2]) * sqrt(results$ICJWCfinal[3]))
 corrDifference.BNBX <- corrTrue.BNBX - corrContinuous.BNBX
 
 correlation <- data.frame("True"       = corrTrue.BNBX,

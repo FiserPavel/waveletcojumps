@@ -10,10 +10,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Co-jump estimation - one day example
+Example code which replicates JWTSRV (Barunik and Vacha, 2015 QF) and JWTSCV (Barunik and Vacha, 2018 JFM) methods and is applied in Barunik and Fiser 2019. The main advantage of the wavelet-based estimation is the ability of wavelets to precisely separate the continuous price process into
+continuous and discontinuous parts even when data are covered with noise. For more details about the method see (Barunik and Vacha, 2018 JFM).
 
-Example of application of Barunik and Vacha (2018) method of jump wavelet estimation used for exact co-jump detection. 
-
-... some other intro...
+The code has been developed in R version 3.5.0.
 ```{r functions, echo = FALSE}
 ################################################################################
 #                             Quadratic variation                              # 
@@ -220,14 +220,20 @@ hypothesisAnalysis <- function(Zstatus, QVmat, ICmat, CJmat){
 
 ``` 
 
+### Required packages and functions
+Load required packages
 ```{r packages, message = FALSE, warning = FALSE}
 library(wavelets)
 library(dplyr)
-# source('.OneDayExample/OneDayExampleFunctions.R')
 ```
 
-## Data used for the analysis
-One trading day data of two time series - Log returns (dlClose) with one minute and five minutefrequency - are used for the analysis. 
+Source functions used in the analyses
+``` {r sourcefunctions, eval = FALSE}
+source('.OneDayExample/OneDayExampleFunctions.R')
+```
+
+### Example data used for the analysis
+One trading day data of two time series (BN, BX) - Log returns (dlClose) with one minute and five minute frequency - are used for the analysis. 
 
 ```{r DataLoad}
 BNday_5min <- readRDS("BNdayExample_5min.rds")
@@ -237,7 +243,8 @@ BNday_1min <- readRDS("BNdayExample_1min.rds")
 BXday_1min <- readRDS("BXdayExample_1min.rds")
 ```
 
-## Quadratic variation / covariation
+## Realized Quadratic variation / covariation
+Realized quadratic variation and covariation is estimated using five minute frequency data.
 ``` {r QV}
 QV_BNBN <- QVCalculation(BNday_5min$dlClose, BNday_5min$dlClose)
 QV_BXBX <- QVCalculation(BXday_5min$dlClose, BXday_5min$dlClose)
@@ -250,8 +257,8 @@ QVmat.BNBX <- data.frame(QV_BNBX,
 QVmat.BNBX
 ```
 
-## Integrated covariance - with jumps (IC TSCV)
-Observed data with both microstructure noise and jumps are used for estimation of Integraded covariance - two scaled covariance. 
+## Integrated covariance two-scale realized covariance - with jumps (IC TSCV)
+Observed data with both microstructure noise and jumps are used for estimation of Integraded covariance - two scaled realized covariance. Ic TSCV matrix is than used for calcualtion of corresponding correlation. 
 ```{r ICTSCV}
 # Extract returns from the data 
 retBN <- BNday_1min$dlClose
@@ -269,7 +276,7 @@ ICTSCVmat.BNBX
 
 
 ## Jump identification and estimation 
-Jumps are estimated one minute data.
+The position of jumps is identified and subsequently jumps are estimated using one minute data. Subsequently "jump estimates" are substracted from the "observed returns" and "jump adjusted returns" are obtained.
 
 ```{r Jumps, warning = FALSE}
 BNday_1min <- cbind(BNday_1min, 
@@ -282,7 +289,7 @@ BNday_1min %>% filter(Hour == 14 & Min %in% c(30:35))
 ```
 
 ## Co-jump identification 
-
+Once we have jumps identified and estimated we proceed with co-jump identification. 
 ```{r cojump}
 CJ.BNBX <- BNday_1min$JumpSize * BXday_1min$JumpSize 
 CJintraday <- sum(CJ.BNBX)
@@ -290,8 +297,8 @@ CJintraday
 ```
 
 
-## Integrated covariance - without jumps (IC JWC)
-Observed data cleared from the identified jumps are used for estimation of Integraded covariance - Jump wavelet covariance. 
+## Integrated covariance jump wavelet covariance - without jumps (IC JWC)
+Above obtained "jump adjusted returns" are used for estimation of Integraded covariance - Jump wavelet covariance.
 ```{r ICJWC}
 retBNNoJ <- BNday_1min$dlCloseNoJ
 retBXNoJ <- BXday_1min$dlCloseNoJ
@@ -306,17 +313,17 @@ ICJWCmat.BNBX
 ```
 
 ## Bootstrap 
-Estimated IC JWC is used for bootstap for exact co-jump estimation. 
+Estimated IC JWC is used for bootstap to obtain Z values estimates. 
 
 ```{r bootstrap}
 # We are generating 1 second data in the bootstrap - Nobservations.boot 
 Nobservations <- nrow(BNday_1min)
 Nobservations.boot <- Nobservations * 60
 
-# Fixed G is used in this case
-fixedG <- 75 #? total number of observations in our frequency / number of 5 min observations, should be 60 then
+# Fixed G is used in this case, see Zhang(2011) for more details
+fixedG <- 75 
 
-# number of bootsrap loops
+# number of bootstrap loops
 b <- 100
 
 # set seed for replication purposes 
@@ -335,21 +342,23 @@ head(Zvalues)
 ```
 
 
-## Hypothesis testing - Co-jump identification
-
+## Hypothesis testing - Co-jump estimation
+With Z values estimated we calculate Z statistic and test the null hypothesis of no presence of jumps and co-jumps in the observed returns.
 ```{r hypothesis}
 # values for one-sided and two-sided t-test
 ci <- 2.5767
 ci2 <- 1.968
 
-# Combining data of one pair together
+# Combining co-jumps data of one pair together 
 CJmat.BNBX <- c(CJintraday,0,0)
 
-# Calculation of Z value from calculated data -
+# Calculation of Z value from calculated data
 Zvalue.BNBX <- (QVmat.BNBX - ICJWCmat.BNBX[1:3])/QVmat.BNBX
 
 # Calculation of Z bootstrap statistic
 Zstatistic.BNBX <- (Zvalue.BNBX - colMeans(Zvalues))/sqrt(diag(var(Zvalues)))
+
+# Hausman test for hypothesis testing
 Zstatus <- c(Zstatistic.BNBX[1] > ci2, Zstatistic.BNBX[2:3] > ci) 
 
 # Identification of significant co-jump variation
@@ -364,7 +373,6 @@ results
 # correlation difference
 corrTrue.BNBX <- ICTSCVmat.BNBX$rho.BNBX
 corrContinuous.BNBX <- results["BNBX",]$ICJWCfinal/(sqrt(results["BNBN",]$ICJWCfinal) * sqrt(results["BXBX",]$ICJWCfinal))
-# corrContinuous.BNBX <- results$ICJWCfinal[1]/(sqrt(results$ICJWCfinal[2]) * sqrt(results$ICJWCfinal[3]))
 corrDifference.BNBX <- corrTrue.BNBX - corrContinuous.BNBX
 
 correlation <- data.frame("True"       = corrTrue.BNBX,
